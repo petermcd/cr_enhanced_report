@@ -5,7 +5,7 @@ from datetime import datetime
 
 from cosmic_ray.tools.html import pycharm_url
 from cosmic_ray.work_item import TestOutcome
-from yattag import Doc
+from yattag import Doc, SimpleDoc
 
 from cr_enhanced_report.datatypes import HtmlColor, SummaryDetail
 from cr_enhanced_report.db import DB
@@ -67,12 +67,12 @@ class Reporter(object):
 
         print(doc.getvalue())
 
-    def _create_analysis(self, doc: Doc) -> None:
+    def _create_analysis(self, doc: SimpleDoc) -> None:
         """
         Create analysis section from scratch.
 
         Args:
-            doc: doc object.
+            doc: SimpleDoc object.
         """
         with doc.tag("section", id="file-analysis"):
             work_item_data = self._fetch_work_items_data()
@@ -120,8 +120,8 @@ class Reporter(object):
         return work_item_groups
 
     @staticmethod
-    def _create_file_analysis(file_id: int, file_tasks, doc: Doc) -> None:
-        with doc.tag("div", klass="accordion-item", id=f"accordiantasks-{file_id}"):
+    def _create_file_analysis(file_id: int, file_tasks, doc: SimpleDoc) -> None:
+        with doc.tag("div", klass="accordion-item", id=f"accordian-tasks-{file_id}"):
             task_id = 1
             for file_task in file_tasks:
                 with doc.tag("div", klass="accordion-item"):
@@ -140,7 +140,7 @@ class Reporter(object):
                     with doc.tag(
                         "div",
                         ("aria-labelledby", f"flush-heading-{file_id}"),
-                        ("data-bs-parent", f"#accordiantasks-{file_id}"),
+                        ("data-bs-parent", f"#accordian-tasks-{file_id}"),
                         klass="accordion-collapse collapse",
                         id=f"flush-collapse-{file_id}-{task_id}",
                     ):
@@ -175,12 +175,12 @@ class Reporter(object):
                                 doc.text(file_task[1].output)
                 task_id += + 1
 
-    def _create_summary(self, doc: Doc) -> None:
+    def _create_summary(self, doc: SimpleDoc) -> None:
         """
         Create report summary section from scratch.
 
         Args:
-            doc: doc object.
+            doc: SimpleDoc object.
         """
         with doc.tag("section", id="report-summary"):
             with doc.tag("h2"):
@@ -236,13 +236,13 @@ class Reporter(object):
                                     with doc.tag("td", klass=self._score_color(score=summary_item.score)):
                                         doc.text(f'{summary_item.score}%')
                                     with doc.tag("td", klass="killed"):
-                                        doc.text(summary_item.killed)
+                                        doc.text(str(summary_item.killed))
                                     with doc.tag("td", klass="incompetent"):
                                         doc.text(
-                                            summary_item.incompetent
+                                            str(summary_item.incompetent)
                                         )
                                     with doc.tag("td", klass="survived"):
-                                        doc.text(summary_item.survived)
+                                        doc.text(str(summary_item.survived))
 
     def _fetch_summary_data(self) -> list[SummaryDetail]:
         """Fetch data used for the report summary."""
@@ -307,7 +307,7 @@ class Reporter(object):
         return 'survived'
 
     @staticmethod
-    def _css(doc: Doc) -> None:
+    def _css(doc: SimpleDoc) -> None:
         with doc.tag("style"):
             doc.text(f"""
                 .survived {{
