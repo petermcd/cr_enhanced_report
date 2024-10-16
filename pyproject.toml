@@ -47,4 +47,4 @@ Issues = "https://github.com/petermcd/cr_enhanced_report/issues"
 
 [options.extras_require]
 build = [ "build", "wheel" ]
-test = ["flake8", "isort", "mypy", "pre-commit", "pytest", "pytest-mock"]
+test = ["cosmic-ray", "flake8", "isort", "mypy", "pre-commit", "pytest", "pytest-mock"]

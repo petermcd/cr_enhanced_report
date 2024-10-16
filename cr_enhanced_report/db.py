@@ -17,7 +17,12 @@ class DB(WorkDB):
 
     @property
     def completed_work_items(self) -> tuple[Any, ...]:
-        """Iterable of all completed work items."""
+        """
+        Iterable of all completed work items.
+
+        Returns:
+            Tuple of completed work items.
+        """
         with self._session_maker.begin() as session:
             results = session.query(
                 WorkItemStorage, WorkResultStorage, MutationSpecStorage
@@ -50,16 +55,37 @@ class DB(WorkDB):
                 WorkResultStorage.job_id == WorkItemStorage.job_id
             ).where(
                 WorkResultStorage.job_id == MutationSpecStorage.job_id
-            )
-            if self.skip_success:
-                results = results.where(
-                    WorkResultStorage.test_outcome != TestOutcome.KILLED
-                )
-            results = results.group_by(
+            ).group_by(
                 MutationSpecStorage.module_path, WorkResultStorage.test_outcome
             ).all()
 
         return results
+
+    @property
+    def kill_count(self) -> int:
+        """
+        Fetch the number of killed mutants.
+
+        Returns:
+            Number of killed mutants.
+        """
+        return sum(r.is_killed for _, r in self.results)
+
+    @property
+    def survival_rate(self) -> float:
+        """
+        Fetch the survival rate.
+
+        Returns:
+            Survival rate as a percentage accurate to 2 decimal places.
+        """
+        kills = self.kill_count
+        num_results = self.num_results
+
+        if not num_results:
+            return 0
+
+        return round((1 - kills / num_results) * 100, 2)
 
 
 @contextlib.contextmanager
