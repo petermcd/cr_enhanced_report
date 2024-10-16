@@ -45,6 +45,6 @@ Documentation = "https://github.com/petermcd/cr_enhanced_report"
 Repository = "https://github.com/petermcd/cr_enhanced_report"
 Issues = "https://github.com/petermcd/cr_enhanced_report/issues"
 
-[options.extras_require]
+[project.optional-dependencies]
 build = [ "build", "wheel" ]
 test = ["cosmic-ray", "flake8", "isort", "mypy", "pre-commit", "pytest", "pytest-mock"]
