@@ -47,4 +47,10 @@ Issues = "https://github.com/petermcd/cr_enhanced_report/issues"
 
 [project.optional-dependencies]
 build = [ "build", "wheel" ]
-test = ["cosmic-ray", "flake8", "isort", "mypy", "pre-commit", "pytest", "pytest-mock"]
+test = ["cosmic-ray", "flake8", "isort", "mypy", "pre-commit", "pytest", "pytest-cov", "pytest-mock"]
+
+[tool.pytest.ini_options]
+addopts = "--cov-report term-missing --cov=cr_enhanced_report"
+testpaths = [
+    "tests",
+]

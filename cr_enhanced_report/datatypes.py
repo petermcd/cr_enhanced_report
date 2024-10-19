@@ -1,8 +1,7 @@
 """Module to declare datatypes used in the cosmic-ray report."""
 import enum
 import pathlib
-
-from attr import dataclass
+from dataclasses import dataclass
 
 
 class HtmlColor(enum.Enum):
@@ -26,15 +25,17 @@ class SummaryDetail(object):
     """Object to store summary details for a given file."""
 
     __slots__ = (
-        '_file',
+        '_is_dir',
         '_killed',
         '_incompetent',
+        '_path',
         '_survived',
     )
 
     def __init__(
         self,
         path: pathlib.Path,
+        is_dir: bool = False,
         killed: int = 0,
         incompetent: int = 0,
         survived: int = 0,
@@ -44,24 +45,26 @@ class SummaryDetail(object):
 
         Args:
             path (pathlib.Path): Path to the summary file.
+            is_dir (bool, optional): Whether the summary file is a directory. Defaults to False.
             killed (int, optional): Killed status. Defaults to 0.
             incompetent (int, optional): Incompetent status. Defaults to 0.
             survived (int, optional): Survived status. Defaults to 0.
         """
-        self._file = path
+        self._path = path
+        self._is_dir = is_dir
         self._incompetent = incompetent
         self._killed = killed
         self._survived = survived
 
     @property
-    def file(self) -> pathlib.Path:
+    def is_dir(self) -> bool:
         """
-        Property for file and path.
+        Whether the summary file is a directory.
 
         Returns:
-            pathlib.Path: Path for the file the summary is for.
+            bool: Whether the summary file is a directory.
         """
-        return self._file
+        return self._is_dir
 
     @property
     def killed(self) -> int:
@@ -102,6 +105,35 @@ class SummaryDetail(object):
             incompetent (int): Incompetent status.
         """
         self._incompetent = incompetent
+
+    @property
+    def path(self) -> pathlib.Path:
+        """
+        Property for file and path.
+
+        Returns:
+            pathlib.Path: Path for the file the summary is for.
+        """
+        return self._path
+
+    def path_list(self) -> list[pathlib.Path]:
+        """
+        Fetch a list of directories the file is in.
+
+        Returns:
+            list[pathlib.Path]: List of directories the file is in.
+        """
+        if self.is_dir:
+            path_parts = self.path.parts[1:]
+        else:
+            path_parts = self.path.parts[1: -1]
+        part_count = len(path_parts)
+        paths: list[pathlib.Path] = [
+            pathlib.Path('/'),
+        ]
+        for i in range(part_count):
+            paths.append(pathlib.Path('/').joinpath('/'.join(path_parts[:i+1])))
+        return paths
 
     @property
     def score(self) -> float:
@@ -147,7 +179,7 @@ class SummaryDetail(object):
             True if self equals other, False otherwise.
         """
         if isinstance(other, SummaryDetail):
-            return self._file == other._file
+            return self._path == other._path
         return False
 
     def __ge__(self, other: 'SummaryDetail') -> bool:
@@ -174,15 +206,32 @@ class SummaryDetail(object):
         Returns:
             True if self greater than other, False otherwise.
         """
-        this_path = self.file.parent
-        other_path = other.file.parent
-        if this_path == other_path:
-            return self.file > other.file
-        if str(this_path).startswith(str(other_path)):
-            return False
-        if str(other_path).startswith(str(this_path)):
+        if self.is_dir == other.is_dir:
+            if self.path == other.path:
+                return True
+            if self.is_dir:
+                return self.path > other.path
+            if self.path_list()[-1] == other.path_list()[-1]:
+                return self.path > other.path
+            if str(other.path).startswith(str(self.path_list()[-1])):
+                return True
+            if str(self.path).startswith(str(other.path_list()[-1])):
+                return False
+            return self.path_list()[-1] > other.path_list()[-1]
+        if self.is_dir:
+            other_path = other.path_list()[-1]
+            if self.path == other_path:
+                return False
+            if str(self.path).startswith(str(other_path)):
+                return False
+            return self.path > other.path
+        # The following is reached if other.is_dir is True
+        self_path = self.path_list()[-1]
+        if other.path == self_path:
             return True
-        return self.file > other.file
+        if str(other.path).startswith(str(self_path)):
+            return True
+        return self.path > other.path
 
     def __le__(self, other: 'SummaryDetail') -> bool:
         """
@@ -208,15 +257,33 @@ class SummaryDetail(object):
         Returns:
             True if self less than other, False otherwise.
         """
-        this_path = self.file.parent
-        other_path = other.file.parent
-        if this_path == other_path:
-            return self.file < other.file
-        if str(this_path).startswith(str(other_path)):
-            return True
-        if str(other_path).startswith(str(this_path)):
+        if self.is_dir == other.is_dir:
+            if self.path == other.path:
+                return False
+            if self.is_dir:
+                return self.path < other.path
+            if self.path_list()[-1] == other.path_list()[-1]:
+                return self.path < other.path
+            if str(other.path).startswith(str(self.path_list()[-1])):
+                return False
+            if str(self.path).startswith(str(other.path_list()[-1])):
+                return True
+            return self.path_list()[-1] < other.path_list()[-1]
+        if self.is_dir:
+            other_path = other.path_list()[-1]
+            self_path = self.path_list()[-1]
+            if self.path == other_path:
+                return True
+            if str(self.path).startswith(str(other_path)):
+                return True
+            return self.path < other.path
+        # The following is reached if other.is_dir is True
+        self_path = self.path_list()[-1]
+        if other.path == self_path:
             return False
-        return self.file < other.file
+        if str(other.path).startswith(str(self_path)):
+            return False
+        return self.path < other.path
 
     def __ne__(self, other: object) -> bool:
         """
@@ -229,3 +296,15 @@ class SummaryDetail(object):
             True if self not equals other, False otherwise.
         """
         return not self.__eq__(other)
+
+    def __str__(self) -> str:
+        """
+        Represent the object as a string.
+
+        Return:
+            String representation of the summary file.
+        """
+        return (
+            f"SummaryDetail(path='{self.path}', is_dir={self.is_dir}, killed={self.killed}, "
+            + f"incompetent={self.incompetent}, survived={self.survived})"
+        )

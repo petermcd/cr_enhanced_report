@@ -89,9 +89,9 @@ class Reporter(object):
                                 ("aria-controls", f"flush-collapse{file_id}"),
                                 klass="accordion-button collapsed",
                                 type="button",
-                                id=self._normalize_path(str(file_name)),
+                                id=self._normalize_path(f'/{file_name}'),
                             ):
-                                doc.text(str(file_name))
+                                doc.text(f'/{file_name}')
                         with doc.tag(
                             "div",
                             ("data-bs-parent", "#accordian-files"),
@@ -183,32 +183,22 @@ class Reporter(object):
             doc: SimpleDoc object.
         """
         with doc.tag("section", id="report-summary"):
-            with doc.tag("h2"):
-                doc.text('Summary')
-            with doc.tag("section"):
-                with doc.tag("p"):
-                    doc.text(f'Report Ran On: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
-                with doc.tag("p"):
-                    doc.text(f'Total Jobs: {self._db.num_work_items}')
-                if self._db.num_results > 0:
+            with doc.tag("div", id="summary"):
+                with doc.tag("h2"):
+                    doc.text('Summary')
+                with doc.tag("section"):
                     with doc.tag("p"):
-                        doc.text(f'Completed Jobs: {self._db.num_results}')
+                        doc.text(f'Report Ran On: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
                     with doc.tag("p"):
-                        doc.text(
-                            'Surviving Mutants: '
-                            + f'{self._db.num_results - self._db.kill_count}({self._db.survival_rate}%)'
-                        )
-            with doc.tag("p"):
-                with doc.tag(
-                    "a",
-                    ("data-toggle", "collapse"),
-                    ("aria-expanded", "false"),
-                    ("aria-controls", "summary"),
-                    klass="btn btn-primary",
-                    href="#summary", role='button'
-                ):
-                    doc.text('summary')
-            with doc.tag("div", klass="collapse.show", id="summary"):
+                        doc.text(f'Total Jobs: {self._db.num_work_items}')
+                    if self._db.num_results > 0:
+                        with doc.tag("p"):
+                            doc.text(f'Completed Jobs: {self._db.num_results}')
+                        with doc.tag("p"):
+                            doc.text(
+                                'Surviving Mutants: '
+                                + f'{self._db.num_results - self._db.kill_count}({self._db.survival_rate}%)'
+                            )
                 with doc.tag("div", klass="card card-body"):
                     with doc.tag("table"):
                         with doc.tag("thead"):
@@ -228,11 +218,11 @@ class Reporter(object):
                             for summary_item in summary_data:
                                 with doc.tag("tr"):
                                     with doc.tag("td"):
-                                        if str(summary_item.file) == 'all':
-                                            doc.text(str(summary_item.file))
+                                        if summary_item.is_dir:
+                                            doc.text(str(summary_item.path))
                                         else:
-                                            with doc.tag("a", href=f'#{self._normalize_path(str(summary_item.file))}'):
-                                                doc.text(str(summary_item.file))
+                                            with doc.tag("a", href=f'#{self._normalize_path(str(summary_item.path))}'):
+                                                doc.text(str(summary_item.path))
                                     with doc.tag("td", klass=self._score_color(score=summary_item.score)):
                                         doc.text(f'{summary_item.score}%')
                                     with doc.tag("td", klass="killed"):
@@ -247,34 +237,44 @@ class Reporter(object):
     def _fetch_summary_data(self) -> list[SummaryDetail]:
         """Fetch data used for the report summary."""
         task_data: dict[str, SummaryDetail] = {}
-        all_data: SummaryDetail = SummaryDetail(
-            path=pathlib.Path('all'),
-            killed=0,
-            incompetent=0,
-            survived=0,
-        )
         status_counts = self._db.fetch_status_counts()
         for status_count in status_counts:
+            killed = 0
+            incompetent = 0
+            survived = 0
             if status_count[1] not in task_data:
                 task_data[status_count[1]] = SummaryDetail(
-                    path=pathlib.Path(status_count[1]),
+                    path=pathlib.Path('/').joinpath(status_count[1]),
                     killed=0,
                     incompetent=0,
                     survived=0,
                 )
             if status_count[0] == TestOutcome.KILLED:
-                task_data[status_count[1]].killed += status_count[2]
-                all_data.killed += status_count[2]
+                killed += status_count[2]
             elif status_count[0] == TestOutcome.INCOMPETENT:
-                task_data[status_count[1]].incompetent += status_count[2]
-                all_data.incompetent += status_count[2]
+                incompetent += status_count[2]
             elif status_count[0] == TestOutcome.SURVIVED:
-                task_data[status_count[1]].survived += status_count[2]
-                all_data.survived += status_count[2]
+                survived += status_count[2]
+
+            task_data[status_count[1]].killed += killed
+            task_data[status_count[1]].incompetent += incompetent
+            task_data[status_count[1]].survived += survived
+            for dir in task_data[status_count[1]].path_list():
+                if str(dir) not in task_data:
+                    task_data[str(dir)] = SummaryDetail(
+                        path=dir,
+                        is_dir=True,
+                        killed=0,
+                        incompetent=0,
+                        survived=0,
+                    )
+                task_data[str(dir)].killed += killed
+                task_data[str(dir)].incompetent += incompetent
+                task_data[str(dir)].survived += survived
 
         task_data_list: list[SummaryDetail] = list(task_data.values())
         task_data_list.sort()
-        return [all_data] + task_data_list
+        return task_data_list
 
     @staticmethod
     def _normalize_path(path: str) -> str:
