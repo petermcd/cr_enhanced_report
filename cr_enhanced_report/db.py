@@ -14,6 +14,8 @@ class DB(WorkDB):
     """Database handler adding new functionality to WorkDB."""
 
     skip_success: bool = False
+    _kill_count: int | None = None
+    _survival_rate: float | None = None
 
     @property
     def completed_work_items(self) -> tuple[Any, ...]:
@@ -69,7 +71,9 @@ class DB(WorkDB):
         Returns:
             Number of killed mutants.
         """
-        return sum(r.is_killed for _, r in self.results)
+        if self._kill_count is None:
+            self._kill_count = sum(r.is_killed for _, r in self.results)
+        return self._kill_count or 0
 
     @property
     def survival_rate(self) -> float:
@@ -79,13 +83,16 @@ class DB(WorkDB):
         Returns:
             Survival rate as a percentage accurate to 2 decimal places.
         """
-        kills = self.kill_count
-        num_results = self.num_results
+        if self._survival_rate is None:
+            kills = self.kill_count
+            num_results = self.num_results
 
-        if not num_results:
-            return 0
+            if not num_results:
+                self._survival_rate = 0.0
+            else:
+                self._survival_rate = round((1 - kills / num_results) * 100, 2)
 
-        return round((1 - kills / num_results) * 100, 2)
+        return self._survival_rate or 0.0
 
 
 @contextlib.contextmanager
