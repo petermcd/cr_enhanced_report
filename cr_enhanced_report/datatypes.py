@@ -1,5 +1,6 @@
 """Module to declare datatypes used in the cosmic-ray report."""
 import enum
+import functools
 import pathlib
 from dataclasses import dataclass
 
@@ -21,6 +22,7 @@ class TaskData:
     status_count: dict[str, int]
 
 
+@functools.total_ordering
 class SummaryDetail(object):
     """Object to store summary details for a given file."""
 
@@ -182,71 +184,6 @@ class SummaryDetail(object):
             return self._path == other._path
         return False
 
-    def __ge__(self, other: 'SummaryDetail') -> bool:
-        """
-        Greater than or equal operator.
-
-        Args:
-            other (SummaryDetail): Other object.
-
-        Returns:
-            True if self greater than or equals other, False otherwise.
-        """
-        if self.__eq__(other):
-            return True
-        return self.__gt__(other)
-
-    def __gt__(self, other: 'SummaryDetail') -> bool:
-        """
-        Greater than operator.
-
-        Args:
-            other (SummaryDetail): Other object.
-
-        Returns:
-            True if self greater than other, False otherwise.
-        """
-        if self.is_dir == other.is_dir:
-            if self.path == other.path:
-                return True
-            if self.is_dir:
-                return self.path > other.path
-            if self.path_list()[-1] == other.path_list()[-1]:
-                return self.path > other.path
-            if str(other.path).startswith(str(self.path_list()[-1])):
-                return True
-            if str(self.path).startswith(str(other.path_list()[-1])):
-                return False
-            return self.path_list()[-1] > other.path_list()[-1]
-        if self.is_dir:
-            other_path = other.path_list()[-1]
-            if self.path == other_path:
-                return False
-            if str(self.path).startswith(str(other_path)):
-                return False
-            return self.path > other.path
-        # The following is reached if other.is_dir is True
-        self_path = self.path_list()[-1]
-        if other.path == self_path:
-            return True
-        if str(other.path).startswith(str(self_path)):
-            return True
-        return self.path > other.path
-
-    def __le__(self, other: 'SummaryDetail') -> bool:
-        """
-        Less than or equals operator.
-
-        Args:
-            other (SummaryDetail): Other object.
-
-        Returns:
-            True if self less than or equals other, False otherwise.
-        """
-        if self.__eq__(other):
-            return True
-        return self.__lt__(other)
-
     def __lt__(self, other: 'SummaryDetail') -> bool:
         """
         Less than operator.
@@ -284,18 +221,6 @@ class SummaryDetail(object):
         if str(other.path).startswith(str(self_path)):
             return False
         return self.path < other.path
-
-    def __ne__(self, other: object) -> bool:
-        """
-        Not equals operator.
-
-        Args:
-            other (object): Other object.
-
-        Returns:
-            True if self not equals other, False otherwise.
-        """
-        return not self.__eq__(other)
 
     def __str__(self) -> str:
         """
