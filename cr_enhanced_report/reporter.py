@@ -259,18 +259,18 @@ class Reporter(object):
             task_data[status_count[1]].killed += killed
             task_data[status_count[1]].incompetent += incompetent
             task_data[status_count[1]].survived += survived
-            for dir in task_data[status_count[1]].path_list():
-                if str(dir) not in task_data:
-                    task_data[str(dir)] = SummaryDetail(
-                        path=dir,
+            for directory in task_data[status_count[1]].path_list():
+                if str(directory) not in task_data:
+                    task_data[str(directory)] = SummaryDetail(
+                        path=directory,
                         is_dir=True,
                         killed=0,
                         incompetent=0,
                         survived=0,
                     )
-                task_data[str(dir)].killed += killed
-                task_data[str(dir)].incompetent += incompetent
-                task_data[str(dir)].survived += survived
+                task_data[str(directory)].killed += killed
+                task_data[str(directory)].incompetent += incompetent
+                task_data[str(directory)].survived += survived
         return sorted(task_data.values())
 
     @staticmethod
