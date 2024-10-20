@@ -45,6 +45,12 @@ Documentation = "https://github.com/petermcd/cr_enhanced_report"
 Repository = "https://github.com/petermcd/cr_enhanced_report"
 Issues = "https://github.com/petermcd/cr_enhanced_report/issues"
 
-[options.extras_require]
+[project.optional-dependencies]
 build = [ "build", "wheel" ]
-test = ["flake8", "isort", "mypy", "pre-commit", "pytest", "pytest-mock"]
+test = ["cosmic-ray", "flake8", "isort", "mypy", "pre-commit", "pytest", "pytest-cov", "pytest-mock"]
+
+[tool.pytest.ini_options]
+addopts = "--cov-report term-missing --cov=cr_enhanced_report"
+testpaths = [
+    "tests",
+]
