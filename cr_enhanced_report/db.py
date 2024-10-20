@@ -86,7 +86,7 @@ class DB(WorkDB):
         if self._survival_rate is None:
             kills = self.kill_count
             num_results = self.num_results
-            self._survival_rate = 0.0 if not num_results else round((1 - kills / num_results) * 100, 2)
+            self._survival_rate = round((1 - kills / num_results) * 100, 2) if num_results else 0.0
 
         return self._survival_rate
 

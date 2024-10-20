@@ -210,10 +210,9 @@ class SummaryDetail(object):
                 return True
             return self.path < other.path
         # The following is reached if other.is_dir is True
-        self_path = self.path_list()[-1]
-        if other.path == self_path:
+        if other.path == self.path_list()[-1]:
             return False
-        if str(other.path).startswith(str(self_path)):
+        elif str(other.path).startswith(str(self.path_list()[-1])):
             return False
         return False
 
