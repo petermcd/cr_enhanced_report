@@ -7,7 +7,7 @@ name = "cr_enhanced_report"
 description = "Enhanced report for Cosmic-Ray."
 readme = {file="README.md", content-type="text/markdown"}
 keywords = [
-    "cosmoc-ray",
+    "cosmic-ray",
     "enhanced report",
     "mutation",
     "plugin",
@@ -24,7 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 license = {text="MIT License"}
-version = "0.0.1"
+version = "0.0.2"
 requires-python = ">= 3.10,<3.13"
 dependencies = [
     "cosmic-ray>=8.3"

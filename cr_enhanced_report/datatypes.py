@@ -187,22 +187,23 @@ class SummaryDetail(object):
             True if self less than other, False otherwise.
         """
         if not isinstance(other, SummaryDetail):
-            raise NotImplementedError()
+            return NotImplemented
         if self.is_dir == other.is_dir:
-            if self.path == other.path:
-                return False
-            if self.is_dir:
-                return self.path < other.path
-            if self.path_list()[-1] == other.path_list()[-1]:
-                return self.path < other.path
-            if str(other.path).startswith(str(self.path_list()[-1])):
-                return False
-            if str(self.path).startswith(str(other.path_list()[-1])):
-                return True
-            return self.path_list()[-1] < other.path_list()[-1]
+            return self._lt_same_type(other=other)
+        return self._lt_different_type(other=other)
+
+    def _lt_different_type(self, other: 'SummaryDetail') -> bool:
+        """
+        Less than operator for items that are different types (file/directory).
+
+        Args:
+            other (SummaryDetail): Other object.
+
+        Returns:
+            True if self less than other, False otherwise.
+        """
         if self.is_dir:
             other_path = other.path_list()[-1]
-            self_path = self.path_list()[-1]
             if self.path == other_path:
                 return True
             if str(self.path).startswith(str(other_path)):
@@ -214,7 +215,29 @@ class SummaryDetail(object):
             return False
         if str(other.path).startswith(str(self_path)):
             return False
-        return self.path < other.path
+        return False
+
+    def _lt_same_type(self, other: 'SummaryDetail') -> bool:
+        """
+        Less than operator for items that are the same type (file/directory).
+
+        Args:
+            other (SummaryDetail): Other object.
+
+        Returns:
+            True if self less than other, False otherwise.
+        """
+        if self.path == other.path:
+            return False
+        if self.is_dir:
+            return self.path < other.path
+        if self.path_list()[-1] == other.path_list()[-1]:
+            return self.path < other.path
+        if str(other.path).startswith(str(self.path_list()[-1])):
+            return False
+        if str(self.path).startswith(str(other.path_list()[-1])):
+            return True
+        return self.path_list()[-1] < other.path_list()[-1]
 
     def __str__(self) -> str:
         """

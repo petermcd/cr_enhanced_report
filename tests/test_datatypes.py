@@ -6,8 +6,8 @@ import pytest
 from cr_enhanced_report.datatypes import SummaryDetail
 
 
-class TestDataTypes():
-    """Tests for data typess."""
+class TestDataTypes(object):
+    """Tests for data types."""
 
     @pytest.mark.parametrize(
         'path_a,path_a_is_dir,path_b,path_b_is_dir,expected',
