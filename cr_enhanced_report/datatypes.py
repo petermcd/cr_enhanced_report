@@ -125,16 +125,12 @@ class SummaryDetail(object):
         Returns:
             list[pathlib.Path]: List of directories the file is in.
         """
-        if self.is_dir:
-            path_parts = self.path.parts[1:]
-        else:
-            path_parts = self.path.parts[1: -1]
+        path_parts = self.path.parts[1:] if self.is_dir else self.path.parts[1: -1]
         part_count = len(path_parts)
         paths: list[pathlib.Path] = [
             pathlib.Path('/'),
         ]
-        for i in range(part_count):
-            paths.append(pathlib.Path('/').joinpath('/'.join(path_parts[:i+1])))
+        paths.extend(pathlib.Path('/').joinpath('/'.join(path_parts[:i+1])) for i in range(part_count))
         return paths
 
     @property
@@ -146,9 +142,7 @@ class SummaryDetail(object):
             Float: Score for the file.
         """
         total_tests = self.killed + self.incompetent + self.survived
-        if self.killed == 0:
-            return 0.
-        return round(self.killed / total_tests * 100, 2)
+        return 0.0 if self.killed == 0 else round(self.killed / total_tests * 100, 2)
 
     @property
     def survived(self) -> int:
@@ -180,9 +174,7 @@ class SummaryDetail(object):
         Returns:
             True if self equals other, False otherwise.
         """
-        if isinstance(other, SummaryDetail):
-            return self._path == other._path
-        return False
+        return self._path == other._path if isinstance(other, SummaryDetail) else False
 
     def __lt__(self, other: 'SummaryDetail') -> bool:
         """
@@ -194,6 +186,8 @@ class SummaryDetail(object):
         Returns:
             True if self less than other, False otherwise.
         """
+        if not isinstance(other, SummaryDetail):
+            raise NotImplementedError()
         if self.is_dir == other.is_dir:
             if self.path == other.path:
                 return False

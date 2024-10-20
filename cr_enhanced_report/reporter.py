@@ -271,10 +271,7 @@ class Reporter(object):
                 task_data[str(dir)].killed += killed
                 task_data[str(dir)].incompetent += incompetent
                 task_data[str(dir)].survived += survived
-
-        task_data_list: list[SummaryDetail] = list(task_data.values())
-        task_data_list.sort()
-        return task_data_list
+        return sorted(task_data.values())
 
     @staticmethod
     def _normalize_path(path: str) -> str:

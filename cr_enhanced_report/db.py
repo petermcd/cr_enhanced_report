@@ -87,12 +87,7 @@ class DB(WorkDB):
             kills = self.kill_count
             num_results = self.num_results
 
-            if not num_results:
-                self._survival_rate = 0.0
-            else:
-                self._survival_rate = round((1 - kills / num_results) * 100, 2)
-
-        return self._survival_rate or 0.0
+        return 0.0 if not num_results else round((1 - kills / num_results) * 100, 2)
 
 
 @contextlib.contextmanager

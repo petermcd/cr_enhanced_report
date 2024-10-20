@@ -124,13 +124,6 @@ class TestDataTypes():
                 False,
                 False
             ],
-            [
-                '/folder1/folder2/file2.py',
-                False,
-                '',
-                False,
-                False
-            ],
         ],
     )
     def test_eq(self, path_a: str, path_a_is_dir: bool, path_b: str, path_b_is_dir: bool, expected: bool):
@@ -148,15 +141,21 @@ class TestDataTypes():
             path=Path(path_a),
             is_dir=path_a_is_dir,
         )
-        if not path_b:
-            result = summary_a == path_b
-            assert result is expected, f'{path_a} == "" expected: {expected} got: {result}'
         summary_b = SummaryDetail(
             path=Path(path_b),
             is_dir=path_b_is_dir,
         )
         result = summary_a == summary_b
         assert result == expected, f'{path_a} == {path_b} expected: {expected} got: {result}'
+
+    def test_eq_incorrect_datatype(self):
+        """Test to ensure the equal than logic is correct when datatypes do not match."""
+        summary = SummaryDetail(
+            path=Path('/folder1'),
+            is_dir=False,
+        )
+        result = summary == 'SomeString'
+        assert result is False, f'/folder1 == False expected: {False} got: {result}'
 
     @pytest.mark.parametrize(
         'path_a,path_a_is_dir,path_b,path_b_is_dir,expected',
