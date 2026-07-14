@@ -1,11 +1,17 @@
 """Module to overload the cosmic-ray database."""
+
 import contextlib
 from typing import Any
 
-from cosmic_ray.work_db import (MutationSpecStorage, WorkDB, WorkItemStorage,
-                                WorkResultStorage, _mutation_spec_from_storage,
-                                _work_item_from_storage,
-                                _work_result_from_storage)
+from cosmic_ray.work_db import (
+    MutationSpecStorage,
+    WorkDB,
+    WorkItemStorage,
+    WorkResultStorage,
+    _mutation_spec_from_storage,
+    _work_item_from_storage,
+    _work_result_from_storage,
+)
 from cosmic_ray.work_item import TestOutcome
 from sqlalchemy import func
 
@@ -26,40 +32,37 @@ class DB(WorkDB):
             Tuple of completed work items.
         """
         with self._session_maker.begin() as session:
-            results = session.query(
-                WorkItemStorage, WorkResultStorage, MutationSpecStorage
-            ).where(
-                WorkItemStorage.job_id == WorkResultStorage.job_id
-            ).where(
-                WorkItemStorage.job_id == MutationSpecStorage.job_id
+            results = (
+                session.query(WorkItemStorage, WorkResultStorage, MutationSpecStorage)
+                .where(WorkItemStorage.job_id == WorkResultStorage.job_id)
+                .where(WorkItemStorage.job_id == MutationSpecStorage.job_id)
             )
             if self.skip_success:
-                results = results.where(
-                    WorkResultStorage.test_outcome != TestOutcome.KILLED
-                )
+                results = results.where(WorkResultStorage.test_outcome != TestOutcome.KILLED)
             results = results.order_by(MutationSpecStorage.module_path)
             return tuple(
                 (
                     _work_item_from_storage(work_item),
                     _work_result_from_storage(result),
-                    _mutation_spec_from_storage(mutation_spec)
-                ) for work_item, result, mutation_spec in results
+                    _mutation_spec_from_storage(mutation_spec),
+                )
+                for work_item, result, mutation_spec in results
             )
 
     def fetch_status_counts(self):
         """Fetch status counts from the database."""
         with self._session_maker.begin() as session:
-            results = session.query(
-                WorkResultStorage.test_outcome,
-                MutationSpecStorage.module_path,
-                func.count(WorkResultStorage.test_outcome)
-            ).where(
-                WorkResultStorage.job_id == WorkItemStorage.job_id
-            ).where(
-                WorkResultStorage.job_id == MutationSpecStorage.job_id
-            ).group_by(
-                MutationSpecStorage.module_path, WorkResultStorage.test_outcome
-            ).all()
+            results = (
+                session.query(
+                    WorkResultStorage.test_outcome,
+                    MutationSpecStorage.module_path,
+                    func.count(WorkResultStorage.test_outcome),
+                )
+                .where(WorkResultStorage.job_id == WorkItemStorage.job_id)
+                .where(WorkResultStorage.job_id == MutationSpecStorage.job_id)
+                .group_by(MutationSpecStorage.module_path, WorkResultStorage.test_outcome)
+                .all()
+            )
 
         return results
 

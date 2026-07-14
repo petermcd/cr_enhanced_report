@@ -1,11 +1,9 @@
-[build-system]
-requires = ["setuptools >= 61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "cr_enhanced_report"
 description = "Enhanced report for Cosmic-Ray."
 readme = {file="README.md", content-type="text/markdown"}
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
 keywords = [
     "cosmic-ray",
     "enhanced report",
@@ -16,18 +14,18 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Software Development :: Bug Tracking",
     "Topic :: Software Development :: Testing",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
 ]
-license = {text="MIT License"}
 version = "0.0.2"
-requires-python = ">= 3.10,<3.13"
 dependencies = [
-    "cosmic-ray>=8.3"
+    "cosmic-ray>=8.4.6"
 ]
 authors = [
     {name="Peter McDonald", email="git@petermcdonald.co.uk"}
@@ -45,12 +43,36 @@ Documentation = "https://github.com/petermcd/cr_enhanced_report"
 Repository = "https://github.com/petermcd/cr_enhanced_report"
 Issues = "https://github.com/petermcd/cr_enhanced_report/issues"
 
-[project.optional-dependencies]
-build = [ "build", "wheel" ]
-test = ["cosmic-ray", "flake8", "isort", "mypy", "pre-commit", "pytest", "pytest-cov", "pytest-mock"]
+[dependency-groups]
+dev = [
+    "aiohttp>=3.14.1", # Minimum version to resolve security issue
+    "click>=8.3.3", # Minimum version to resolve security issue
+    "cosmic-ray>=8.4.6",
+    "msgpack>=1.2.1", # Minimum version to resolve security issue
+    "pip>=26.1.2", # Minimum version to resolve security issue
+    "pip-audit>=2.9.0",
+    "pygments>=2.20.0",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.13.0",
+    "troml>=0.4.1",
+    "ty>=0.0.1a20",
+]
 
 [tool.pytest.ini_options]
-addopts = "--cov-report term-missing --cov=cr_enhanced_report"
+addopts = "--cov=cr_enhanced_report --cov-report term-missing --cov-report xml:coverage.xml"
 testpaths = [
     "tests",
 ]
+
+[tool.ruff]
+line-length = 120
+
+[cosmic-ray]
+module-path = "cr_enhanced_report"
+timeout = 10.0
+excluded-modules = []
+test-command = "uv run pytest"
+
+[cosmic-ray.distributor]
+name = "local"
