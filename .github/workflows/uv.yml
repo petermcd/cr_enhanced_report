@@ -1,0 +1,77 @@
+name: UV
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+env:
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+permissions:
+  contents: read # Allows actions/checkout to read the repository contents.
+
+jobs:
+  uv:
+    name: python
+    runs-on: ${{ matrix.os }}
+    permissions: read-all
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
+          - "3.13"
+          - "3.14"
+          - "3.15"
+          - "3.16"
+        os:
+          - "ubuntu-latest"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Set PYTHON_GIL
+        if: endsWith(matrix.python-version, 't')
+        run: echo "PYTHON_GIL=0" >> "$GITHUB_ENV"
+      - name: Set up Python
+        run: uv python install
+      - name: pyTest
+        run: uv run pytest tests
+      - name: Ruff (check)
+        run: uvx ruff check
+      - name: Ruff (format)
+        run: uvx ruff format --diff --check
+      - name: Ty
+        run: uvx ty check
+      - name: Troml
+        run: uvx troml check
+      - name: pip-audit
+        run: uv audit
+  sonarqube:
+    name: sonarqube
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
+        os:
+          - "ubuntu-latest"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Run SonarQube
+        uses: sonarsource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
