@@ -1,4 +1,5 @@
 """Module to declare datatypes used in the cosmic-ray report."""
+
 import enum
 import functools
 import pathlib
@@ -8,10 +9,10 @@ from dataclasses import dataclass
 class HtmlColor(enum.Enum):
     """Enum to store HTML colors for different states."""
 
-    amber = 'orange'
-    green = 'green'
-    lightgrey = 'lightgrey'
-    red = 'red'
+    amber = "orange"
+    green = "green"
+    lightgrey = "lightgrey"
+    red = "red"
 
 
 @dataclass
@@ -23,15 +24,15 @@ class TaskData:
 
 
 @functools.total_ordering
-class SummaryDetail(object):
+class SummaryDetail:
     """Object to store summary details for a given file."""
 
     __slots__ = (
-        '_is_dir',
-        '_killed',
-        '_incompetent',
-        '_path',
-        '_survived',
+        "_incompetent",
+        "_is_dir",
+        "_killed",
+        "_path",
+        "_survived",
     )
 
     def __init__(
@@ -125,12 +126,12 @@ class SummaryDetail(object):
         Returns:
             list[pathlib.Path]: List of directories the file is in.
         """
-        path_parts = self.path.parts[1:] if self.is_dir else self.path.parts[1: -1]
+        path_parts = self.path.parts[1:] if self.is_dir else self.path.parts[1:-1]
         part_count = len(path_parts)
         paths: list[pathlib.Path] = [
-            pathlib.Path('/'),
+            pathlib.Path("/"),
         ]
-        paths.extend(pathlib.Path('/').joinpath('/'.join(path_parts[:i+1])) for i in range(part_count))
+        paths.extend(pathlib.Path("/").joinpath("/".join(path_parts[: i + 1])) for i in range(part_count))
         return paths
 
     @property
@@ -176,7 +177,7 @@ class SummaryDetail(object):
         """
         return self._path == other._path if isinstance(other, SummaryDetail) else False
 
-    def __lt__(self, other: 'SummaryDetail') -> bool:
+    def __lt__(self, other: "SummaryDetail") -> bool:
         """
         Less than operator.
 
@@ -192,7 +193,7 @@ class SummaryDetail(object):
             return self._lt_same_type(other=other)
         return self._lt_different_type(other=other)
 
-    def _lt_different_type(self, other: 'SummaryDetail') -> bool:
+    def _lt_different_type(self, other: "SummaryDetail") -> bool:
         """
         Less than operator for items that are different types (file/directory).
 
@@ -210,13 +211,11 @@ class SummaryDetail(object):
                 return True
             return self.path < other.path
         # The following is reached if other.is_dir is True
-        if other.path == self.path_list()[-1]:
-            return False
-        elif str(other.path).startswith(str(self.path_list()[-1])):
+        if other.path == self.path_list()[-1] or str(other.path).startswith(str(self.path_list()[-1])):
             return False
         return False
 
-    def _lt_same_type(self, other: 'SummaryDetail') -> bool:
+    def _lt_same_type(self, other: "SummaryDetail") -> bool:
         """
         Less than operator for items that are the same type (file/directory).
 

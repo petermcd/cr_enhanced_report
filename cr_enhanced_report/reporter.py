@@ -1,7 +1,8 @@
 """Module to create the Cosmic Ray report."""
+
 import pathlib
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 from cosmic_ray.tools.html import pycharm_url
 from cosmic_ray.work_item import TestOutcome
@@ -11,12 +12,12 @@ from cr_enhanced_report.datatypes import HtmlColor, SummaryDetail
 from cr_enhanced_report.db import DB
 
 
-class Reporter(object):
+class Reporter:
     """Create an enhanced cosmic-ray work report from scratch."""
 
     __slots__ = (
-        '_db',
-        '_only_completed',
+        "_db",
+        "_only_completed",
     )
 
     def __init__(self, db: DB, only_completed: bool) -> None:
@@ -34,7 +35,7 @@ class Reporter(object):
         """Create a report from scratch."""
         doc, _, _, _ = Doc().ttl()
         doc.asis("<!DOCTYPE html>")
-        with (doc.tag("html", lang="en")):
+        with doc.tag("html", lang="en"):
             with doc.tag("head"):
                 doc.stag("meta", charset="utf-8")
                 doc.stag("meta", name="viewport", content="width=device-width, initial-scale=1, shrink-to-fit=no")
@@ -54,15 +55,11 @@ class Reporter(object):
                     self._create_analysis(doc=doc)
                 with doc.tag("script"):
                     doc.attr(src="https://code.jquery.com/jquery-3.7.1.js")
-                    doc.attr(
-                        ("integrity", "sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=")
-                    )
+                    doc.attr(("integrity", "sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="))
                     doc.attr(("crossorigin", "anonymous"))
                 with doc.tag("script"):
                     doc.attr(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js")
-                    doc.attr(
-                        ("integrity", "sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy")
-                    )
+                    doc.attr(("integrity", "sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"))
                     doc.attr(("crossorigin", "anonymous"))
 
         print(doc.getvalue())
@@ -80,8 +77,9 @@ class Reporter(object):
                 file_id = 1
                 for file_name in sorted(work_item_data.keys()):
                     with doc.tag("div", klass="accordion-item"):
-                        with doc.tag("h2", klass="accordion-header", id=f"flush-heading{file_id}"):
-                            with doc.tag(
+                        with (
+                            doc.tag("h2", klass="accordion-header", id=f"flush-heading{file_id}"),
+                            doc.tag(
                                 "button",
                                 ("data-bs-toggle", "collapse"),
                                 ("data-bs-target", f"#flush-collapse{file_id}"),
@@ -89,20 +87,21 @@ class Reporter(object):
                                 ("aria-controls", f"flush-collapse{file_id}"),
                                 klass="accordion-button collapsed",
                                 type="button",
-                                id=self._normalize_path(f'/{file_name}'),
-                            ):
-                                doc.text(f'/{file_name}')
-                        with doc.tag(
-                            "div",
-                            ("data-bs-parent", "#accordian-files"),
-                            ("aria-labelledby", "flush-heading{file_id}"),
-                            klass="accordion-collapse collapse",
-                            id=f"flush-collapse{file_id}"
+                                id=self._normalize_path(f"/{file_name}"),
+                            ),
                         ):
-                            with doc.tag("div", klass="accordion-body"):
-                                self._create_file_analysis(
-                                    file_id=file_id, file_tasks=work_item_data[file_name], doc=doc
-                                )
+                            doc.text(f"/{file_name}")
+                        with (
+                            doc.tag(
+                                "div",
+                                ("data-bs-parent", "#accordian-files"),
+                                ("aria-labelledby", "flush-heading{file_id}"),
+                                klass="accordion-collapse collapse",
+                                id=f"flush-collapse{file_id}",
+                            ),
+                            doc.tag("div", klass="accordion-body"),
+                        ):
+                            self._create_file_analysis(file_id=file_id, file_tasks=work_item_data[file_name], doc=doc)
                     file_id += 1
 
     def _fetch_work_items_data(self):
@@ -125,8 +124,9 @@ class Reporter(object):
             task_id = 1
             for file_task in file_tasks:
                 with doc.tag("div", klass="accordion-item"):
-                    with doc.tag("h2", klass="accordion-header", id=f"flush-heading-{file_id}-{task_id}"):
-                        with doc.tag(
+                    with (
+                        doc.tag("h2", klass="accordion-header", id=f"flush-heading-{file_id}-{task_id}"),
+                        doc.tag(
                             "button",
                             ("data-bs-toggle", "collapse"),
                             ("data-bs-target", f"#flush-collapse-{file_id}-{task_id}"),
@@ -134,46 +134,48 @@ class Reporter(object):
                             ("aria-controls", f"flush-collapse-{file_id}-{task_id}"),
                             klass=f"accordion-button collapsed {file_task[1].test_outcome.value}",
                             type="button",
-                        ):
-                            with doc.tag("span", klass="job_id"):
-                                doc.text(file_task[0].job_id)
-                    with doc.tag(
-                        "div",
-                        ("aria-labelledby", f"flush-heading-{file_id}"),
-                        ("data-bs-parent", f"#accordian-tasks-{file_id}"),
-                        klass="accordion-collapse collapse",
-                        id=f"flush-collapse-{file_id}-{task_id}",
+                        ),
+                        doc.tag("span", klass="job_id"),
                     ):
-                        with doc.tag("div", klass="accordion-body"):
-                            with doc.tag("section", klass=f"task-summary {file_task[1].test_outcome.value}"):
-                                with doc.tag("p"):
-                                    with doc.tag("b"):
-                                        doc.text(file_task[1].test_outcome.value.upper())
-                                with doc.tag("p"):
-                                    doc.text(f'Worker outcome: {file_task[1].worker_outcome.value}')
-                                with doc.tag("p"):
-                                    doc.text(f'Test outcome: {file_task[1].test_outcome.value}')
-
-                            with doc.tag("pre", klass="location"):
-                                with doc.tag(
-                                    "a",
-                                    href=pycharm_url(str(file_task[2].module_path), file_task[2].start_pos[0]),
-                                    klass="text-secondary",
-                                ):
-                                    with doc.tag("button", klass="btn btn-outline-dark"):
-                                        doc.text(
-                                            f"{file_task[2].module_path}, "
-                                            + f"start pos: {file_task[2].start_pos}, end pos: {file_task[2].end_pos}"
-                                        )
+                        doc.text(file_task[0].job_id)
+                    with (
+                        doc.tag(
+                            "div",
+                            ("aria-labelledby", f"flush-heading-{file_id}"),
+                            ("data-bs-parent", f"#accordian-tasks-{file_id}"),
+                            klass="accordion-collapse collapse",
+                            id=f"flush-collapse-{file_id}-{task_id}",
+                        ),
+                        doc.tag("div", klass="accordion-body"),
+                    ):
+                        with doc.tag("section", klass=f"task-summary {file_task[1].test_outcome.value}"):
+                            with doc.tag("p"), doc.tag("b"):
+                                doc.text(file_task[1].test_outcome.value.upper())
                             with doc.tag("p"):
-                                doc.text(
-                                    f"Operator: {file_task[2].operator_name}, Occurrence: {file_task[2].occurrence}"
-                                )
-                            with doc.tag("pre", klass="task-diff"):
-                                doc.text(file_task[1].diff)
-                            with doc.tag("pre", klass="task-output"):
-                                doc.text(file_task[1].output)
-                task_id += + 1
+                                doc.text(f"Worker outcome: {file_task[1].worker_outcome.value}")
+                            with doc.tag("p"):
+                                doc.text(f"Test outcome: {file_task[1].test_outcome.value}")
+
+                        with (
+                            doc.tag("pre", klass="location"),
+                            doc.tag(
+                                "a",
+                                href=pycharm_url(str(file_task[2].module_path), file_task[2].start_pos[0]),
+                                klass="text-secondary",
+                            ),
+                            doc.tag("button", klass="btn btn-outline-dark"),
+                        ):
+                            doc.text(
+                                f"{file_task[2].module_path}, "
+                                + f"start pos: {file_task[2].start_pos}, end pos: {file_task[2].end_pos}"
+                            )
+                        with doc.tag("p"):
+                            doc.text(f"Operator: {file_task[2].operator_name}, Occurrence: {file_task[2].occurrence}")
+                        with doc.tag("pre", klass="task-diff"):
+                            doc.text(file_task[1].diff)
+                        with doc.tag("pre", klass="task-output"):
+                            doc.text(file_task[1].output)
+                task_id += +1
 
     def _create_summary(self, doc: SimpleDoc) -> None:
         """
@@ -182,57 +184,52 @@ class Reporter(object):
         Args:
             doc: SimpleDoc object.
         """
-        with doc.tag("section", id="report-summary"):
-            with doc.tag("div", id="summary"):
-                with doc.tag("h2"):
-                    doc.text('Summary')
-                with doc.tag("section"):
+        with doc.tag("section", id="report-summary"), doc.tag("div", id="summary"):
+            with doc.tag("h2"):
+                doc.text("Summary")
+            with doc.tag("section"):
+                with doc.tag("p"):
+                    doc.text(f"Report Ran On: {datetime.now(tz=timezone.utc).strftime('%d/%m/%Y %H:%M:%S')}")
+                with doc.tag("p"):
+                    doc.text(f"Total Jobs: {self._db.num_work_items}")
+                if self._db.num_results > 0:
                     with doc.tag("p"):
-                        doc.text(f'Report Ran On: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
+                        doc.text(f"Completed Jobs: {self._db.num_results}")
                     with doc.tag("p"):
-                        doc.text(f'Total Jobs: {self._db.num_work_items}')
-                    if self._db.num_results > 0:
-                        with doc.tag("p"):
-                            doc.text(f'Completed Jobs: {self._db.num_results}')
-                        with doc.tag("p"):
-                            doc.text(
-                                'Surviving Mutants: '
-                                + f'{self._db.num_results - self._db.kill_count}({self._db.survival_rate}%)'
-                            )
-                with doc.tag("div", klass="card card-body"):
-                    with doc.tag("table"):
-                        with doc.tag("thead"):
-                            with doc.tag("tr"):
-                                with doc.tag("th"):
-                                    doc.text('Path')
-                                with doc.tag("th"):
-                                    doc.text('Score')
-                                with doc.tag("th"):
-                                    doc.text(TestOutcome.KILLED.capitalize())
-                                with doc.tag("th"):
-                                    doc.text(TestOutcome.INCOMPETENT.capitalize())
-                                with doc.tag("th"):
-                                    doc.text(TestOutcome.SURVIVED.capitalize())
-                        with doc.tag("tbody"):
-                            summary_data: list[SummaryDetail] = self._fetch_summary_data()
-                            for summary_item in summary_data:
-                                with doc.tag("tr"):
-                                    with doc.tag("td"):
-                                        if summary_item.is_dir:
-                                            doc.text(str(summary_item.path))
-                                        else:
-                                            with doc.tag("a", href=f'#{self._normalize_path(str(summary_item.path))}'):
-                                                doc.text(str(summary_item.path))
-                                    with doc.tag("td", klass=self._score_color(score=summary_item.score)):
-                                        doc.text(f'{summary_item.score}%')
-                                    with doc.tag("td", klass="killed"):
-                                        doc.text(str(summary_item.killed))
-                                    with doc.tag("td", klass="incompetent"):
-                                        doc.text(
-                                            str(summary_item.incompetent)
-                                        )
-                                    with doc.tag("td", klass="survived"):
-                                        doc.text(str(summary_item.survived))
+                        doc.text(
+                            "Surviving Mutants: "
+                            + f"{self._db.num_results - self._db.kill_count}({self._db.survival_rate}%)"
+                        )
+            with doc.tag("div", klass="card card-body"), doc.tag("table"):
+                with doc.tag("thead"), doc.tag("tr"):
+                    with doc.tag("th"):
+                        doc.text("Path")
+                    with doc.tag("th"):
+                        doc.text("Score")
+                    with doc.tag("th"):
+                        doc.text(TestOutcome.KILLED.capitalize())
+                    with doc.tag("th"):
+                        doc.text(TestOutcome.INCOMPETENT.capitalize())
+                    with doc.tag("th"):
+                        doc.text(TestOutcome.SURVIVED.capitalize())
+                with doc.tag("tbody"):
+                    summary_data: list[SummaryDetail] = self._fetch_summary_data()
+                    for summary_item in summary_data:
+                        with doc.tag("tr"):
+                            with doc.tag("td"):
+                                if summary_item.is_dir:
+                                    doc.text(str(summary_item.path))
+                                else:
+                                    with doc.tag("a", href=f"#{self._normalize_path(str(summary_item.path))}"):
+                                        doc.text(str(summary_item.path))
+                            with doc.tag("td", klass=self._score_color(score=summary_item.score)):
+                                doc.text(f"{summary_item.score}%")
+                            with doc.tag("td", klass="killed"):
+                                doc.text(str(summary_item.killed))
+                            with doc.tag("td", klass="incompetent"):
+                                doc.text(str(summary_item.incompetent))
+                            with doc.tag("td", klass="survived"):
+                                doc.text(str(summary_item.survived))
 
     def _fetch_summary_data(self) -> list[SummaryDetail]:
         """Fetch data used for the report summary."""
@@ -244,7 +241,7 @@ class Reporter(object):
             survived = 0
             if status_count[1] not in task_data:
                 task_data[status_count[1]] = SummaryDetail(
-                    path=pathlib.Path('/').joinpath(status_count[1]),
+                    path=pathlib.Path("/").joinpath(status_count[1]),
                     killed=0,
                     incompetent=0,
                     survived=0,
@@ -284,7 +281,7 @@ class Reporter(object):
         Returns:
             Normalized path.
         """
-        return re.sub(pattern=r'[\/.]', repl='_', string=path)
+        return re.sub(pattern=r"[\/.]", repl="_", string=path)
 
     @staticmethod
     def _score_color(score: float) -> str:
@@ -298,10 +295,10 @@ class Reporter(object):
             HtmlColor based on the score.
         """
         if score >= 80.01:
-            return 'killed'
+            return "killed"
         if score >= 50.01:
-            return 'incompetent'
-        return 'survived'
+            return "incompetent"
+        return "survived"
 
     @staticmethod
     def _css(doc: SimpleDoc) -> None:

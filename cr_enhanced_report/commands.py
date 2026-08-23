@@ -1,4 +1,5 @@
 """Application commands."""
+
 import click
 
 from cr_enhanced_report.db import DB, use_db
