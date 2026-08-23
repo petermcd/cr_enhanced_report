@@ -16,19 +16,22 @@ maintainers = [
     {name="Peter McDonald", email="git@petermcdonald.co.uk"}
 ]
 readme = {file="README.md", content-type="text/markdown"}
-license = {text="MIT License"}
-requires-python = ">=3.12"
+license = "MIT"
+requires-python = "<3.14,>=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Bug Tracking",
     "Topic :: Software Development :: Testing",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Programming Language :: Python :: 3.15",
-    "Programming Language :: Python :: 3.16",
+]
+
+dependencies = [
+    "cosmic-ray>=8.7"
 ]
 
 [project.urls]
@@ -36,6 +39,10 @@ Homepage = "https://github.com/petermcd/cr_enhanced_report"
 Documentation = "https://github.com/petermcd/cr_enhanced_report"
 Repository = "https://github.com/petermcd/cr_enhanced_report"
 Issues = "https://github.com/petermcd/cr_enhanced_report/issues"
+
+[build-system]
+requires = ["setuptools>=84", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = [

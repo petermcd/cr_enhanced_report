@@ -2,7 +2,7 @@
 
 import pathlib
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from cosmic_ray.tools.html import pycharm_url
 from cosmic_ray.work_item import TestOutcome
@@ -189,7 +189,7 @@ class Reporter:
                 doc.text("Summary")
             with doc.tag("section"):
                 with doc.tag("p"):
-                    doc.text(f"Report Ran On: {datetime.now(tz=UTC).strftime('%d/%m/%Y %H:%M:%S')}")
+                    doc.text(f"Report Ran On: {datetime.now(tz=timezone.utc).strftime('%d/%m/%Y %H:%M:%S')}")
                 with doc.tag("p"):
                     doc.text(f"Total Jobs: {self._db.num_work_items}")
                 if self._db.num_results > 0:
