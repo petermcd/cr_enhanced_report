@@ -70,7 +70,7 @@ jobs:
         run: uv run --locked --group lint ty check
       #- name: Troml  # Disabled as troml doesnt support python 3.10
       #  run: uv run --locked --group lint troml check
-  audit:  # Disabled as python version unsupported
+  audit:
     name: audit
     runs-on: ubuntu-latest
     timeout-minutes: 15
